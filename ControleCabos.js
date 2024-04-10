@@ -35,45 +35,127 @@ function inicializarMapa() {
     criarECarregarCamadasEspecificas();
 
     // Configura eventos para checkboxes após a criação das camadas
-    configurarCheckboxEventos();
+    // configurarCheckboxEventos();
 
     // Configurações adicionais como Geocoder, etc.
     configurarGeocoder();
 }
 
 function criarECarregarCamadasEspecificas() {
-    // Garante que 'map' e 'bounds_group' estejam disponíveis
     if (!map || !bounds_group) {
         console.error("Mapa ou Grupo de Limites não inicializado.");
         return;
     }
 
-    // // Criação e adição da camada dos cabos diretamente ao mapa
-    // layer_Cabos_2 = adicionarCamada('Cabos', 'pane_Cabos_2', 402, 'normal', json_Cabos_2, pop_Cabos_2, style_Cabos_2_0);
-    // map.addLayer(layer_Cabos_2);
+    // Inicializa o grupo de clustering para cabos
+    var camadaCabosCluster = L.markerClusterGroup();
+    // Chama adicionarCamadaCluster para cabos com isCabo=true
+    layer_Cabos_2 = adicionarCamadaCluster('Cabos', 'pane_Cabos_2', 402, 'normal', json_Cabos_2, pop_Cabos_2, style_Cabos_2_0, camadaCabosCluster, true);
 
-    // Para as camadas de Postes, vamos usar clustering
-    var camadaPostesCluster = L.markerClusterGroup(); // Cria um grupo de clustering
-    layer_Postes_3 = adicionarCamadaCluster('Postes', 'pane_Postes_3', 403, 'normal', json_Postes_3, pop_Postes_3, style_Postes_3_0, camadaPostesCluster, true);
-    
-    // A camada de Projetos para Compartilhar é criada, mas não é adicionada ao mapa inicialmente
-    // layer_ProjetosparaCompartilhar_1 = adicionarCamada('Projetos para Compartilhar', 'pane_ProjetosparaCompartilhar_1', 405, 'normal', json_ProjetosparaCompartilhar_1, pop_ProjetosparaCompartilhar_1, style_ProjetosparaCompartilhar_1_0);
+    // Inicializa e adiciona outras camadas com seus respectivos grupos de clustering
+    var camadaPostesCluster = L.markerClusterGroup(); // Cria um grupo de clustering para postes
+    layer_Postes_3 = adicionarCamadaCluster('Postes', 'pane_Postes_3', 403, 'normal', json_Postes_3, pop_Postes_3, style_Postes_3_0, camadaPostesCluster);
+
+    var camadaPComxpCluster = L.markerClusterGroup(); // Cria um grupo de clustering para projetos para compartilhar
+    layer_ProjetosparaCompartilhar_1 = adicionarCamadaCluster('Projetos para Compartilhar', 'pane_ProjetosparaCompartilhar_1', 405, 'normal', json_ProjetosparaCompartilhar_1, pop_ProjetosparaCompartilhar_1, style_ProjetosparaCompartilhar_1_0, camadaPComxpCluster);
 }
 
-// Adiciona uma camada ao mapa e ao grupo de limites e retorna a camada criada
-function adicionarCamada(nome, paneNome, zIndex, mixBlendMode, dadosJson, popupFunc, estiloFunc, isCircleMarker = false) {
-    var layer = new L.geoJson(dadosJson, {
-        // Propriedades omitidas para brevidade...
+function adicionarCamadaCluster(nome, paneNome, zIndex, mixBlendMode, dadosJson, popupFunc, estiloFunc, clusterGroup, isCabo = false) {
+    var layerIndividual;
+
+    if (isCabo) {
+        // Conversão de LineString para Point especificamente para a camada de cabos
+        var pontosConvertidos = {
+            type: 'FeatureCollection',
+            features: dadosJson.features.map(function(feature) {
+                var centroid = feature.geometry.coordinates.reduce(function(prev, cur, index, arr) {
+                    return [prev[0] + cur[0] / arr.length, prev[1] + cur[1] / arr.length];
+                }, [0, 0]);
+                return {
+                    type: 'Feature',
+                    properties: feature.properties,
+                    geometry: {
+                        type: 'Point',
+                        coordinates: centroid
+                    }
+                };
+            })
+        };
+        layerIndividual = L.geoJson(pontosConvertidos, {
+            pane: criarPainel(paneNome, zIndex, mixBlendMode),
+            onEachFeature: popupFunc,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, estiloFunc(feature));
+            }
+        });
+    } else {
+        // Para as demais camadas, usa a lógica padrão
+        layerIndividual = L.geoJson(dadosJson, {
+            pane: criarPainel(paneNome, zIndex, mixBlendMode),
+            onEachFeature: popupFunc,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, estiloFunc(feature));
+            }
+        });
+    }
+
+    layerIndividual.eachLayer(function(layer) {
+        clusterGroup.addLayer(layer);
     });
 
-    bounds_group.addLayer(layer);
-    map.addLayer(layer);
-    return layer; // Retorna a camada criada
+    verificarZoomEAtualizarCamada(map.getZoom(), clusterGroup, layerIndividual, dadosJson, isCabo);
+    map.on('zoomend', function() {
+        verificarZoomEAtualizarCamada(map.getZoom(), clusterGroup, layerIndividual, dadosJson, isCabo);
+    });
+
+    return clusterGroup;
 }
+
 var zoomParaDetalhamento = 12;
-function adicionarCamadaCluster(nome, paneNome, zIndex, mixBlendMode, dadosJson, popupFunc, estiloFunc, clusterGroup, isCircleMarker = false) {
-    // Cria a camada individual
-    var layerIndividual = new L.geoJson(dadosJson, {
+
+function verificarZoomEAtualizarCamada(zoomAtual, clusterGroup, layerIndividual, dadosJsonOriginal, isCabo) {
+    if (zoomAtual >= zoomParaDetalhamento) {
+        if (map.hasLayer(clusterGroup)) {
+            map.removeLayer(clusterGroup);
+        }
+        if (isCabo && !map.hasLayer(layerIndividual)) {
+            // Reverte para LineString para a camada de cabos
+            map.removeLayer(layerIndividual);
+            layerIndividual = L.geoJson(dadosJsonOriginal, {
+                // Configurações para LineString
+                pane: criarPainel(paneNome, zIndex, mixBlendMode),
+                onEachFeature: popupFunc,
+                style: estiloFunc
+            });
+            map.addLayer(layerIndividual);
+        }
+    } else {
+        if (map.hasLayer(layerIndividual)) {
+            map.removeLayer(layerIndividual);
+        }
+        if (!map.hasLayer(clusterGroup)) {
+            map.addLayer(clusterGroup);
+        }
+    }
+}
+
+function style_Cabos_2_0() {
+    return {
+        pane: 'pane_Cabos_2',
+        opacity: 1,
+        color: 'rgba(0,0,255,1.0)',
+        dashArray: '',
+        lineCap: 'square',
+        lineJoin: 'bevel',
+        weight: 4.0,
+        fillOpacity: 0,
+        interactive: true,
+    }
+}
+
+
+function adicionarCamada(nome, paneNome, zIndex, mixBlendMode, dadosJson, popupFunc, estiloFunc, isCircleMarker = false) {
+    var layer = new L.geoJson(dadosJson, {
         attribution: '',
         interactive: true,
         dataVar: dadosJson,
@@ -84,21 +166,8 @@ function adicionarCamadaCluster(nome, paneNome, zIndex, mixBlendMode, dadosJson,
         ...(isCircleMarker && { pointToLayer: function (feature, latlng) { return L.circleMarker(latlng, estiloFunc(feature)); } })
     });
 
-    // Adiciona os marcadores individuais ao grupo de clustering
-    layerIndividual.eachLayer(function(layer) {
-        clusterGroup.addLayer(layer);
-    });
-
-    // Inicialmente decide qual camada adicionar baseado no zoom atual
-    verificarZoomEAtualizarCamada(map.getZoom(), clusterGroup, layerIndividual);
-
-    // Ouve eventos de zoom no mapa para alternar entre camadas
-    map.on('zoomend', function() {
-        verificarZoomEAtualizarCamada(map.getZoom(), clusterGroup, layerIndividual);
-    });
-
-    // Retorna o grupo de clustering para referência, mas não é estritamente necessário
-    return clusterGroup;
+    bounds_group.addLayer(layer);
+    map.addLayer(layer);
 }
 
 // Função para verificar o nível de zoom e atualizar a camada visível
@@ -188,20 +257,7 @@ function pop_Cabos_2(feature, layer) {
 
     layer.bindPopup(popupContent, {maxHeight: 400});
 }
-// Função que define o estilo dos cabos
-function style_Cabos_2_0() {
-    return {
-        pane: 'pane_Cabos_2',
-        opacity: 1,
-        color: 'rgba(0,0,255,1.0)',
-        dashArray: '',
-        lineCap: 'square',
-        lineJoin: 'bevel',
-        weight: 4.0,
-        fillOpacity: 0,
-        interactive: true,
-    }
-}
+
 // Função que carrega os dados para o pop up do postes
 function pop_Postes_3(feature, layer) {
     layer.on({
