@@ -1,316 +1,334 @@
 <!doctype html>
 <html lang="pt-br">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
-        <title>Fiber Share</title>
-		<link rel="icon" href="images/Avatares-05.png" type="image/png">
-		<link rel="stylesheet" href="style.css">
-    </head>
-	<body id="site">
-		<div id="overlay" class="overlay"></div>
-		<div id="conteudo" class="gjs-row">
-			<div class="gjs-cell">
-				<div id="canvas" class="gjs-row">
-					<div id="mapa" class="gjs-cell">
-						<div id="map">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<link rel="stylesheet" href="css/leaflet.css">
+	<!-- Inclusão dos estilos do Leaflet.markercluster -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+	<link rel="stylesheet" href="css/qgis2web.css">
+	<link rel="stylesheet" href="css/fontawesome-all.min.css">
+	<link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+	<title>Fiber Share</title>
+	<link rel="icon" href="images/Avatares-05.png" type="image/png">
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body id="site">
+	<div id="overlay" class="overlay"></div>
+	<div id="conteudo" class="gjs-row">
+		<div class="gjs-cell">
+			<div id="canvas" class="gjs-row">
+				<div id="mapa" class="gjs-cell">
+					<div id="map">
+					</div>
+				</div>
+				<div id="barradir" class="gjs-cell">
+					<div id="logo" class="gjs-cell">
+						<a href="">
+							<img id="imagemLogo" src="images/GMAIL 320 x 132-10.png" alt="Logo" />
+						</a>
+					</div>
+					<div class="tab">
+						<button class="tablinks ativo" onclick="trocaraba(event, 'venda')">
+							<th>VENDA</th>
+						</button>
+						<button class="tablinks" onclick="trocaraba(event, 'Swap')">SWAP</button>
+						<button class="tablinks" onclick="trocaraba(event, 'Neutra')">REDE NEUTRA</button>
+						<button class="tablinks" onclick="trocaraba(event, 'Compart')">COMPART.</button>
+					</div>
+					<div id="caixaPesquisas" class="gjs-row">
+						<div class="gjs-cell" id="CaixaVendas">
+							<div class="gjs-row" id="iy80x">
+								<input type="checkbox" id="caixaCabos" name="CaixaselecaoCabos" value="Cabos" checked />
+								<label for="caixaCabos"><img src="legend/Cabos_2.png"></label>
+								<label for="caixaCabos"> Cabos à venda</label>
+							</div>
+							<div class="gjs-row" id="i52ih">
+								<input type="checkbox" id="caixaPostes" name="CaixaselecaoPostes" value="Postes" />
+								<label for="caixaPostes"><img src="legend/Postes_3.png"></label>
+								<label for="caixaPostes">Postes de projetos à venda</label>
+							</div>
+							<div class="gjs-row" id="inwoy">
+								<div class="gjs-cell" id="caixaselecaomapa">
+									<p id="avisotipomapa">Tipo de mapa</p>
+									<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
+										<option value="layer_OpenStreetMap_1">OSM</option>
+										<option value="layer_GoogleSatellite_0">Satélite</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="gjs-cell" id="CaixaSwap" style="display: none;">
+							<div class="gjs-row" id="iy80x">
+								<input type="checkbox" id="caixaCabosSwap" name="CaixaselecaoCabosSwap" value="CabosSwap" />
+								<label for="caixaCabosSwap"><img src="legend/Cabos_SWAP.png"></label>
+								<label for="caixaCabosSwap"> Cabos Swap</label>
+							</div>
+							<div class="gjs-row" id="i52ih">
+								<input type="checkbox" id="caixaPostesSwap" name="CaixaselecaoPostesSwap" value="PostesSwap" />
+								<label for="caixaPostesSwap"><img src="legend/Postes_SWAP.png"></label>
+								<label for="caixaPostesSwap">Postes de projetos para SWAP</label>
+							</div>
+							<div class="gjs-row" id="inwoy">
+								<div class="gjs-cell" id="caixaselecaomapa">
+									<p id="avisotipomapa">Tipo de mapa</p>
+									<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
+										<option value="layer_OpenStreetMap_1">OSM</option>
+										<option value="layer_GoogleSatellite_0">Satélite</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="gjs-cell" id="CaixaRedeNeutra" style="display: none;">
+							<div class="gjs-row" id="iy80x">
+								<input type="checkbox" id="caixaCabosRedeNeutra" name="CaixaselecaoCabosRedeNeutra" value="Cabos" />
+								<label for="caixaCabosRedeNeutra"><img src="legend/Cabos_RN.png"></label>
+								<label for="caixaCabosRedeNeutra"> Projetos de Rede Neutra</label>
+							</div>
+							<div class="gjs-row" id="i52ih">
+								<input type="checkbox" id="caixaPostesRedeNeutra" name="CaixaselecaoPostesRedeNeutra" value="Postes" />
+								<label for="caixaPostesRedeNeutra"><img src="legend/Postes_RN.png"></label>
+								<label for="caixaPostesRedeNeutra">Postes</label>
+							</div>
+							<div class="gjs-row" id="inwoy">
+								<div class="gjs-cell" id="caixaselecaomapa">
+									<p id="avisotipomapa">Tipo de mapa</p>
+									<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
+										<option value="layer_OpenStreetMap_1">OSM</option>
+										<option value="layer_GoogleSatellite_0">Satélite</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="gjs-cell" id="CaixaCompart" style="display: none;">
+							<div class="gjs-row" id="iy80x">
+								<input type="checkbox" id="caixaCabosCompart" name="CaixaselecaoCabosCompart" value="Cabos" checked />
+								<label for="caixaCabosCompart"><img src="legend/Cabos_COMP.png"></label>
+								<label for="caixaCabosCompart"> Projetos para compartilhamento</label>
+							</div>
+							<div class="gjs-row" id="i52ih">
+								<input type="checkbox" id="caixaPostesCompart" name="CaixaselecaoPostesCompart" value="Postes" />
+								<label for="caixaPostesCompart"><img src="legend/Postes_COMP.png"></label>
+								<label for="caixaPostesCompart">Postes</label>
+							</div>
+							<div class="gjs-row" id="inwoy">
+								<div class="gjs-cell" id="caixaselecaomapa">
+									<p id="avisotipomapa">Tipo de mapa</p>
+									<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
+										<option value="layer_OpenStreetMap_1">OSM</option>
+										<option value="layer_GoogleSatellite_0">Satélite</option>
+									</select>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div id="barradir" class="gjs-cell">
-						<div id="logo" class="gjs-cell">
-							<a href="">
-								<img id="imagemLogo" src="images/GMAIL 320 x 132-10.png" alt="Logo"/>
-							</a>
+					<div id="CaixaCarrinho" class="gjs-cell">
+						<div class="gjs-row" id="Carrinho">
+							<table id="tabelaDestino" class="carrinhoEstilo">
+								<caption>Projetos à venda</caption>
+								<thead>
+									<tr>
+										<th>Id Cabo</th>
+										<th>Comprimento [m]</th>
+										<th>Postes</th>
+										<th>Remover</th>
+									</tr>
+								</thead>
+								<tbody>
+									<!-- Linhas serão adicionadas dinamicamente aqui -->
+								</tbody>
+							</table>
 						</div>
-						<div class="tab">
-							<button class="tablinks ativo" onclick="trocaraba(event, 'venda')"><th>VENDA</th></button>
-							<button class="tablinks" onclick="trocaraba(event, 'Swap')">SWAP</button>
-							<button class="tablinks" onclick="trocaraba(event, 'Neutra')">REDE NEUTRA</button>
-							<button class="tablinks" onclick="trocaraba(event, 'Compart')">COMPART.</button>
-						</div>
-						<div id="caixaPesquisas" class="gjs-row">
-							<div class="gjs-cell" id="CaixaVendas">
-								<div class="gjs-row" id="iy80x">
-									<input type="checkbox" id="caixaCabos" name="CaixaselecaoCabos" value="Cabos" checked />
-									<label for= "caixaCabos"><img src="legend/Cabos_2.png"></label>
-									<label for="caixaCabos"> Cabos à venda</label>
-								</div>
-								<div class="gjs-row" id="i52ih">
-									<input type= "checkbox" id="caixaPostes" name="CaixaselecaoPostes" value="Postes"/>
-									<label for= "caixaPostes"><img src="legend/Postes_3.png"></label>
-									<label for= "caixaPostes">Postes de projetos à venda</label>
-								</div>
-								<div class="gjs-row" id="inwoy">
-									<div class="gjs-cell" id="caixaselecaomapa">
-										<p id="avisotipomapa">Tipo de mapa</p>
-										<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
-											<option value="layer_OpenStreetMap_1">OSM</option>
-											<option value="layer_GoogleSatellite_0">Satélite</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="gjs-cell" id="CaixaSwap" style="display: none;">
-								<div class="gjs-row" id="iy80x">
-									<input type="checkbox" id="caixaCabosSwap" name="CaixaselecaoCabosSwap" value="CabosSwap" />
-									<label for= "caixaCabosSwap"><img src="legend/Cabos_SWAP.png"></label>
-									<label for="caixaCabosSwap"> Cabos Swap</label>
-								</div>
-								<div class="gjs-row" id="i52ih">
-									<input type= "checkbox" id="caixaPostesSwap" name="CaixaselecaoPostesSwap" value="PostesSwap"/>
-									<label for= "caixaPostesSwap"><img src="legend/Postes_SWAP.png"></label>
-									<label for= "caixaPostesSwap">Postes de projetos para SWAP</label>
-								</div>
-								<div class="gjs-row" id="inwoy">
-									<div class="gjs-cell" id="caixaselecaomapa">
-										<p id="avisotipomapa">Tipo de mapa</p>
-										<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
-											<option value="layer_OpenStreetMap_1">OSM</option>
-											<option value="layer_GoogleSatellite_0">Satélite</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="gjs-cell" id="CaixaRedeNeutra" style="display: none;">
-								<div class="gjs-row" id="iy80x">
-									<input type="checkbox" id="caixaCabosRedeNeutra" name="CaixaselecaoCabosRedeNeutra" value="Cabos" />
-									<label for= "caixaCabosRedeNeutra"><img src="legend/Cabos_RN.png"></label>
-									<label for="caixaCabosRedeNeutra"> Projetos de Rede Neutra</label>
-								</div>
-								<div class="gjs-row" id="i52ih">
-									<input type= "checkbox" id="caixaPostesRedeNeutra" name="CaixaselecaoPostesRedeNeutra" value="Postes"/>
-									<label for= "caixaPostesRedeNeutra"><img src="legend/Postes_RN.png"></label>
-									<label for= "caixaPostesRedeNeutra">Postes</label>
-								</div>
-								<div class="gjs-row" id="inwoy">
-									<div class="gjs-cell" id="caixaselecaomapa">
-										<p id="avisotipomapa">Tipo de mapa</p>
-										<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
-											<option value="layer_OpenStreetMap_1">OSM</option>
-											<option value="layer_GoogleSatellite_0">Satélite</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="gjs-cell" id="CaixaCompart" style="display: none;">
-								<div class="gjs-row" id="iy80x">
-									<input type="checkbox" id="caixaCabosCompart" name="CaixaselecaoCabosCompart" value="Cabos" checked />
-										<label for= "caixaCabosCompart"><img src="legend/Cabos_COMP.png"></label>
-										<label for="caixaCabosCompart"> Projetos para compartilhamento</label>
-								</div>
-								<div class="gjs-row" id="i52ih">
-									<input type= "checkbox" id="caixaPostesCompart" name="CaixaselecaoPostesCompart" value="Postes"/>
-										<label for= "caixaPostesCompart"><img src="legend/Postes_COMP.png"></label>
-										<label for= "caixaPostesCompart">Postes</label>
-								</div>
-								<div class="gjs-row" id="inwoy">
-									<div class="gjs-cell" id="caixaselecaomapa">
-										<p id="avisotipomapa">Tipo de mapa</p>
-										<select type="text" id="tipomapa" name="SelecaoMapa" onchange="mudarMapa(this.value)">
-											<option value="layer_OpenStreetMap_1">OSM</option>
-											<option value="layer_GoogleSatellite_0">Satélite</option>
-										</select>
-									</div>
-								</div>	
-							</div>
-						</div>
-						<div id="CaixaCarrinho" class="gjs-cell" >
-							<div class="gjs-row" id="Carrinho">
-								<table id="tabelaDestino" class="carrinhoEstilo" >
-									<caption>Projetos à venda</caption>
-									<thead>
-										<tr>
-											<th>Id Cabo</th>
-											<th>Comprimento [m]</th>
-											<th>Postes</th>
-											<th>Remover</th> 
-										</tr>
-									</thead>
-									<tbody>
-										<!-- Linhas serão adicionadas dinamicamente aqui -->
-									</tbody>
-								</table>
-							</div>
 
-							<div class="gjs-row" id="CarrinhoComp">
-								<table id="tabelaDestinoComp" class="carrinhoEstilo" style="display: none;">
-									<caption>Projetos de compartilhamento</caption>
-									<thead>									
-										<tr>
-											<th>Id</th>
-											<th>Local</th>
-											<th>Tipo</th> 
-											<th>remover</th> 
-										</tr>
-									</thead>
-									<tbody>
-										<!-- Linhas serão adicionadas dinamicamente aqui -->
-									</tbody>
-								</table>
-							</div>
+						<div class="gjs-row" id="CarrinhoComp">
+							<table id="tabelaDestinoComp" class="carrinhoEstilo" style="display: none;">
+								<caption>Projetos de compartilhamento</caption>
+								<thead>
+									<tr>
+										<th>Id</th>
+										<th>Local</th>
+										<th>Tipo</th>
+										<th>remover</th>
+									</tr>
+								</thead>
+								<tbody>
+									<!-- Linhas serão adicionadas dinamicamente aqui -->
+								</tbody>
+							</table>
+						</div>
 
 
-							<div class="gjs-row" id="totais">
-								<!-- Tabela de Totais -->
-								<table id="tabelaTotais">
-									<thead>
-										<tr>
-											<th colspan="2" style="text-align: center;">Total</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td>Cabos selecionados</td>
-											<td id="totalIds">0</td>
-										</tr>
-										<tr>
-											<td>Comprimento total [m]</td>
-											<td id="totalComprimento">0</td>
-										</tr>
-										<tr>
-											<td>Total de Postes</td>
-											<td id="totalPostes">0</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-							<div class="gjs-row" id="asdasdads">
-								<button id="botaoSubmeter" onclick="exibirFormulario()">Submeter</button>
-							</div>
-						</div>
-						<div id="CaixaPontos" class="gjs-cell">
-							<div class="gjs-row" id="Pontos">
-								<table id="TabelaPontos" class="TabelaPontos">
-									<thead>
-										<tr>
-											<th>Ponto</th>
-											<th>Latidude</th>
-											<th>Longitude</th>
-											<th>Remover</th>
-										</tr>
-									</thead>
-									<tbody>
-										<!-- Linhas serão adicionadas dinamicamente aqui -->
-									</tbody>
-								</table>	
-							</div>
+						<div class="gjs-row" id="totais">
+							<!-- Tabela de Totais -->
+							<table id="tabelaTotais">
+								<thead>
+									<tr>
+										<th colspan="2" style="text-align: center;">Total</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>Cabos selecionados</td>
+										<td id="totalIds">0</td>
+									</tr>
+									<tr>
+										<td>Comprimento total [m]</td>
+										<td id="totalComprimento">0</td>
+									</tr>
+									<tr>
+										<td>Total de Postes</td>
+										<td id="totalPostes">0</td>
+									</tr>
+								</tbody>
+							</table>
 						</div>
 						<div class="gjs-row" id="asdasdads">
-							<button id="AdicionarMarcador" type="button" onclick="adicionarMarcador()">+</button>
-							<button  id="BotaoMarcador" type="button" onclick="AbrirTabelaPontos()">Adicionar marcador</button>
+							<button id="botaoSubmeter" onclick="exibirFormulario()">Submeter</button>
 						</div>
-						<h id="venderprojeto" onclick="contatovendas()">Quer vender seus projeto ou rede? Clique aqui!</h>
-						<img src="images/interrogation.svg" alt="Tutorial" id="interrogacao" onmouseover="changeIcon()" onmouseout="resetIcon()" onclick="openModal()">
 					</div>
+					<div id="CaixaPontos" class="gjs-cell">
+						<div class="gjs-row" id="Pontos">
+							<table id="TabelaPontos" class="TabelaPontos">
+								<thead>
+									<tr>
+										<th>Ponto</th>
+										<th>Latidude</th>
+										<th>Longitude</th>
+										<th>Remover</th>
+									</tr>
+								</thead>
+								<tbody>
+									<!-- Linhas serão adicionadas dinamicamente aqui -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="gjs-row" id="asdasdads">
+						<button id="AdicionarMarcador" type="button" onclick="adicionarMarcador()">+</button>
+						<button id="BotaoMarcador" type="button" onclick="AbrirTabelaPontos()">Adicionar marcador</button>
+					</div>
+					<h id="venderprojeto" onclick="contatovendas()">Quer vender seus projeto ou rede? Clique aqui!</h>
+					<img src="images/interrogation.svg" alt="Tutorial" id="interrogacao" onmouseover="changeIcon()"
+						onmouseout="resetIcon()" onclick="openModal()">
 				</div>
 			</div>
 		</div>
-		<!--  modal que abre quando a página é iniciada-->
-		<div id="boasvindas" class="boasvindas"	onclick="closeboasvindas()"> 
-			<div id="mensagemboasvindas">
-				<p>Bem-vindos ao Fiber Share, a plataforma da CMoritz dedicada à venda e compartilhamento de projetos, redes aéreas/subterrâneas e operações completas de provedores. Aqui, você pode explorar diferentes rotas, selecionar aqueles de seu interesse e adicioná-los ao carrinho. Ao clicar em "submeter", abrirá um formulário solicitando seus dados de contato. Essas informações serão passadas para a nossa equipe comercial.</p>
-				<p>Qualquer dúvida sobre o site, clique no botão com simbolo de interrogação.</p>
+	</div>
+	<!--  modal que abre quando a página é iniciada-->
+	<div id="boasvindas" class="boasvindas" onclick="closeboasvindas()">
+		<div id="mensagemboasvindas">
+			<p>Bem-vindos ao Fiber Share, a plataforma da CMoritz dedicada à venda e compartilhamento de projetos, redes
+				aéreas/subterrâneas e operações completas de provedores. Aqui, você pode explorar diferentes rotas, selecionar
+				aqueles de seu interesse e adicioná-los ao carrinho. Ao clicar em "submeter", abrirá um formulário solicitando
+				seus dados de contato. Essas informações serão passadas para a nossa equipe comercial.</p>
+			<p>Qualquer dúvida sobre o site, clique no botão com simbolo de interrogação.</p>
+		</div>
+	</div>
+	<!--  modal que abre quando clicado em  (?)-->
+	<div id="modal" class="modal" onclick="closeModal()">
+		<div id="areamapatutorial"> Área do mapa, onde aparecem os cabos que estão à venda</div>
+		<div id="areaestilotutorial"> Aqui é possível alterar o que aparece no mapa e qual o estilo do mapa, escolhendo
+			entre mapa de rua (OSM) e satélite </div>
+		<div id="areacarrinhotutorial"> Área do carrinho, aqui aparecem os cabos que você selecionou, com as suas
+			informações.</div>
+		<div id="areamarcadortutorial"> Clicando aqui é possivel colocar marcadores de locais que você tenha interesse.
+		</div>
+	</div>
+	<!--  Modal que abre ao cliucar em submeter-->
+	<div id="formularioPopUp" class="popup">
+		<form onsubmit="envioDeEmail(); return false;" id="contact-form">
+			<div class="field field_v1">
+				<label for="nome" class="ha-screen-reader">Nome</label>
+				<input id="nome" class="field__input" placeholder="Nome Exemplo" required>
+				<span class="field__label-wrap" aria-hidden="true">
+					<span class="field__label">Nome</span>
+				</span>
 			</div>
-		</div>
-		<!--  modal que abre quando clicado em  (?)-->
-		<div id="modal" class="modal" onclick="closeModal()"> 
-			<div id="areamapatutorial"> Área do mapa, onde aparecem os cabos que estão à venda</div>
-			<div id="areaestilotutorial"> Aqui é possível alterar o que aparece no mapa e qual o estilo do mapa, escolhendo entre mapa de rua (OSM) e satélite </div>
-			<div id="areacarrinhotutorial"> Área do carrinho, aqui aparecem os cabos que você selecionou, com as suas informações.</div>
-			<div id="areamarcadortutorial"> Clicando aqui é possivel colocar marcadores de locais que você tenha interesse.</div>
-		</div>
-		<!--  Modal que abre ao cliucar em submeter-->
-		<div id="formularioPopUp" class="popup">
-			<form onsubmit="envioDeEmail(); return false;" id="contact-form">
-				<div class="field field_v1">
-					<label for="nome" class="ha-screen-reader">Nome</label>
-					<input id="nome" class="field__input" placeholder="Nome Exemplo" required>
-					<span class="field__label-wrap" aria-hidden="true">
-						<span class="field__label">Nome</span>
-					</span>
-				</div>
-				<div class="field field_v2">
-					<label for="telefone" class="ha-screen-reader">Telefone</label>
-					<input id="telefone"  class="field__input" placeholder="(00) 0000-0000" required type="tel">
-					<span class="field__label-wrap" aria-hidden="true">
-						<span class="field__label">Telefone</span>
-					</span>
-				</div>    
-				<div class="field field_v3">
-					<label for="email" class="ha-screen-reader">E-mail</label>
-					<input id="email" class="field__input" placeholder="Empresa@Empresa.com" required type="email">
-					<span class="field__label-wrap" aria-hidden="true">
-						<span class="field__label">E-mail</span>
-					</span>
-				</div>
-				<div style="padding: 10px;">
-					<button type="submit" id="solicitarcabos">Solicitar</button>
-				</div>
-			</form>
-		</div>
-		<div id="contatos" class="popup">
-			
-			
-			<form onsubmit="envioDeContato(); return false;" id="formularioEnvioContato">
-				<h3 style="margin: 0px">Entre em contato com a gente  </h3>
-				<p style="font-size: 13px; margin: 5px;margin-left: 0px;">Se você tem projetos para negociar, por favor, entre em contato. o contataremos assim que possível.</p>
-				<div class="field field_v1">
-					<label for="NomeDoContato" class="ha-screen-reader">Nome</label>
-					<input id="NomeDoContato" class="field__input" placeholder="Nome Exemplo" required>
-					<span class="field__label-wrap" aria-hidden="true">
-						<span class="field__label">Nome</span>
-					</span>
-				</div><br>
-				<div class="field field_v2">
-					<label for="TelefoneDoContato" class="ha-screen-reader">Telefone</label>
-					<input id="TelefoneDoContato" class="field__input" placeholder="(00) 0000-0000" required type="tel">
-					<span class="field__label-wrap" aria-hidden="true">
-						<span class="field__label">Telefone</span>
-					</span>
-				</div><br>
-				<div class="field field_v3">
-					<label for="EmailDoContato" class="ha-screen-reader">E-mail</label>
-					<input id="EmailDoContato" class="field__input" placeholder="Empresa@Empresa.com" required type="email">
-					<span class="field__label-wrap" aria-hidden="true">
-						<span class="field__label">E-mail</span>
-					</span>
-				</div><br><br>
-				<div class="field field_v4">
-					<textarea id="MensagemDoContato" name="mensagem" rows="4" cols="50" style="resize: none;"  placeholder="Mensagem" ></textarea>
-				</div><br>
-				<div style="padding: 0px;">
-					<button type="submit" id="Enviarcontato" style="margin-top: 5px;">Enviar informações</button>
-				</div>
-				<p style="font-size: 13px; margin: 5px;">Nosso contato comercial:</p>
+			<div class="field field_v2">
+				<label for="telefone" class="ha-screen-reader">Telefone</label>
+				<input id="telefone" class="field__input" placeholder="(00) 0000-0000" required type="tel">
+				<span class="field__label-wrap" aria-hidden="true">
+					<span class="field__label">Telefone</span>
+				</span>
+			</div>
+			<div class="field field_v3">
+				<label for="email" class="ha-screen-reader">E-mail</label>
+				<input id="email" class="field__input" placeholder="Empresa@Empresa.com" required type="email">
+				<span class="field__label-wrap" aria-hidden="true">
+					<span class="field__label">E-mail</span>
+				</span>
+			</div>
+			<div style="padding: 10px;">
+				<button type="submit" id="solicitarcabos">Solicitar</button>
+			</div>
+		</form>
+	</div>
+	<div id="contatos" class="popup">
+
+
+		<form onsubmit="envioDeContato(); return false;" id="formularioEnvioContato">
+			<h3 style="margin: 0px">Entre em contato com a gente </h3>
+			<p style="font-size: 13px; margin: 5px;margin-left: 0px;">Se você tem projetos para negociar, por favor, entre em
+				contato. o contataremos assim que possível.</p>
+			<div class="field field_v1">
+				<label for="NomeDoContato" class="ha-screen-reader">Nome</label>
+				<input id="NomeDoContato" class="field__input" placeholder="Nome Exemplo" required>
+				<span class="field__label-wrap" aria-hidden="true">
+					<span class="field__label">Nome</span>
+				</span>
+			</div><br>
+			<div class="field field_v2">
+				<label for="TelefoneDoContato" class="ha-screen-reader">Telefone</label>
+				<input id="TelefoneDoContato" class="field__input" placeholder="(00) 0000-0000" required type="tel">
+				<span class="field__label-wrap" aria-hidden="true">
+					<span class="field__label">Telefone</span>
+				</span>
+			</div><br>
+			<div class="field field_v3">
+				<label for="EmailDoContato" class="ha-screen-reader">E-mail</label>
+				<input id="EmailDoContato" class="field__input" placeholder="Empresa@Empresa.com" required type="email">
+				<span class="field__label-wrap" aria-hidden="true">
+					<span class="field__label">E-mail</span>
+				</span>
+			</div><br><br>
+			<div class="field field_v4">
+				<textarea id="MensagemDoContato" name="mensagem" rows="4" cols="50" style="resize: none;"
+					placeholder="Mensagem"></textarea>
+			</div><br>
+			<div style="padding: 0px;">
+				<button type="submit" id="Enviarcontato" style="margin-top: 5px;">Enviar informações</button>
+			</div>
+			<p style="font-size: 13px; margin: 5px;">Nosso contato comercial:</p>
 			<p style="font-size: 13px; margin: 5px;">Telefone: 48 99665-0093</p>
 			<p style="font-size: 13px; margin: 5px;">E-mail: marcus.malavazi@cmoritz.com.br</p>
-			</form>
-			
+		</form>
 
-		</div>
 
-    </body>
-	    <script src="js/qgis2web_expressions.js"></script>
-        <script src="js/leaflet.js"></script>
-        <script src="js/leaflet.rotatedMarker.js"></script>
-        <script src="js/leaflet.pattern.js"></script>
-        <script src="js/leaflet-hash.js"></script>
-        <script src="js/Autolinker.min.js"></script>
-        <script src="js/rbush.min.js"></script>
-        <script src="js/labelgun.min.js"></script>
-        <script src="js/labels.js"></script>
-        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
-        <script src="data/Cabos_2.js"></script>
-        <script src="data/Postes_3.js"></script>
-		<script src="data/ProjetosparaCompartilhar_1.js"></script>
-		<script src="ControleCabos.js"></script>
-		<script src="ControlePagina.js"></script>
-		<script src="envio_de_email.js"></script>
-		
+	</div>
+
+</body>
+<script src="js/leaflet.js"></script>
+<!-- Inclusão do script do Leaflet.markercluster -->
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster-src.js"></script>
+<script src="js/leaflet.rotatedMarker.js"></script>
+<script src="js/leaflet.pattern.js"></script>
+<script src="js/leaflet-hash.js"></script>
+<script src="js/Autolinker.min.js"></script>
+<script src="js/rbush.min.js"></script>
+<script src="js/labelgun.min.js"></script>
+<script src="js/labels.js"></script>
+<script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+<script src="data/Cabos_2.js"></script>
+<script src="data/Postes_3.js"></script>
+<script src="data/ProjetosparaCompartilhar_1.js"></script>
+<script src="ControleCabos.js"></script>
+<script src="ControlePagina.js"></script>
+<script src="envio_de_email.js"></script>
+
 </html>

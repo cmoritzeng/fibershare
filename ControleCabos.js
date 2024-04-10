@@ -1,209 +1,167 @@
-//Adiciona o item que identifica a caixa de seleção para mostrar os cabos
-var checkbox1 = document.getElementById('caixaCabos');
-//Adiciona a verificação sobre essa caixa, se algo ocorrer, ele percebe
-checkbox1.addEventListener('change',function() {
-    if(this.checked) {
-        map.addLayer(layer_Cabos_2);
-    } else {
-        map.removeLayer(layer_Cabos_2);
-    }
-});
-//Adiciona funcionalidade ao checkbox dos postes
-var checkbox2 = document.getElementById('caixaPostes');
-//Adiciona a verificação sobre essa caixa, se algo ocorrer, ele percebe
-checkbox2.addEventListener('change',function() {
-    if(this.checked) {
-        map.addLayer(layer_Postes_3);
-    } else {
-        map.removeLayer(layer_Postes_3);
-    }
-});
-//Adiciona o item que identifica a caixa de seleção para mostrar os cabos
-var checkbox3 = document.getElementById('caixaCabosCompart');
-//Adiciona a verificação sobre essa caixa, se algo ocorrer, ele percebe
-checkbox3.addEventListener('change',function() {
-    if(this.checked) {
-        map.addLayer(layer_ProjetosparaCompartilhar_1);
-    } else {
-        map.removeLayer(layer_ProjetosparaCompartilhar_1);
-    }
-});
-//Define os layers básicos do mapa
-var baseLayers = {
-    "Sat": layer_GoogleSatellite_0,
-    "Osm": layer_OpenStreetMap_1
-};
-// Função para mudar o mapa com base no tipo selecionado
-function mudarMapa(selectedLayer) {
-    // Atualiza o valor selecionado em todos os elementos select
-    var selectElements = document.querySelectorAll('select[name="SelecaoMapa"]');
-    for (var i = 0; i < selectElements.length; i++) {
-        selectElements[i].value = selectedLayer;
-    }
-
-    // Aplica a mudança de mapa conforme selecionado
-    if (selectedLayer === 'layer_GoogleSatellite_0') {
-        layer_GoogleSatellite_0.addTo(map);
-        map.removeLayer(layer_OpenStreetMap_1);
-    } else if (selectedLayer === 'layer_OpenStreetMap_1') {
-        layer_OpenStreetMap_1.addTo(map);
-        map.removeLayer(layer_GoogleSatellite_0);
-    }
-}
-//Local para guardar os ids dos cabos selecionados
-var idsSelecionados = {}; 
-var idsSelecionadosComp = {}; 
-
-
-//Guarda o  total dos comprimentos selecionados
-var totalComprimento = 0;
-//Guarda o total de postes selecionados
-var totalPostes = 0;
-var totalIds = 0;
-// criada uma camada para o destaque
+// Variáveis Globais
+var map;
+var baseMaps = {};
+var bounds_group = new L.featureGroup();
 var highlightLayer;
-// criada a base do mapa
-var map = L.map('map', {
-    zoomControl:true, maxZoom:28, minZoom:6
-}).fitBounds([[-29.95, -56.00],[-25.55, -47.70]]);
-// criada uma layer com hachura	
-var hash = new L.Hash(map);
-// atribui ao mapa os controles			
-map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a> &middot Feito por: <a href="https://br.linkedin.com/in/joaomonego" target="_blank">João Vitor Corrêa Del Monego</a> e <a href="https://br.linkedin.com/in/yan-ribeiro-de-souza-895893226" target="_blank">Yan Ribeiro de Souza</a> |  <a href="https://cmoritz.com.br/" target="_blank">CMoritz Engenharia</a>');
-// cria a configuração de links, com tamnho 30 e com a localização automatica no lugar que melhor se encaixar			
-var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
-// cria um grupo vázio, nele serão colocadas as camadas dos itens do mapa
-var bounds_group = new L.featureGroup([]);
-// cria um novo painel para ser utilizado com o mapa do google satellite 
-map.createPane('pane_GoogleSatellite_0');
-// dá um style ao painel criado 
-map.getPane('pane_GoogleSatellite_0').style.zIndex = 400;
-// cria uma camada com as imagens de satélite, usando o painel referenciadpo 
-var layer_GoogleSatellite_0 = L.tileLayer('https://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
-    pane: 'pane_GoogleSatellite_0',
-    opacity: 1.0,
-    attribution: 'Satélite',
-    minZoom: 6,
-    maxZoom: 28,
-    minNativeZoom: 0,
-    maxNativeZoom: 18
+var idsSelecionados = {}, idsSelecionadosComp = {};
+var totalComprimento = 0, totalPostes = 0, totalIds = 0;
+
+var layer_Cabos_2, layer_Postes_3, layer_ProjetosparaCompartilhar_1;
+
+// Instância global de Autolinker
+var autolinker = new Autolinker({
+    truncate: { length: 30, location: 'smart' },
+    newWindow: true,
+    className: "my-autolinker"
 });
-// cria um novo painel para ser utilizado com o mapa do OSM
-map.createPane('pane_OpenStreetMap_1');
-// dá um style ao painel criado 
-map.getPane('pane_OpenStreetMap_1').style.zIndex = 401;
-// cria uma camada com as imagens de OSM, usando o painel referenciadpo 
-var layer_OpenStreetMap_1 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    pane: 'pane_OpenStreetMap_1',
-    opacity: 1.0,
-    attribution: 'Mapa',
-    minZoom: 6,
-    maxZoom: 28,
-    minNativeZoom: 0,
-    maxNativeZoom: 19
-});
-// Adiciona o layer do OSM 
-map.addLayer(layer_OpenStreetMap_1);
-// Cria um painel para serem utilizados os cabos
-map.createPane('pane_Cabos_2');
-// dá um style para o painel
-map.getPane('pane_Cabos_2').style.zIndex = 402;
-map.getPane('pane_Cabos_2').style['mix-blend-mode'] = 'normal';
-// cria uma camada com os cabos 
-var layer_Cabos_2 = new L.geoJson(json_Cabos_2, {
-    attribution: '',
-    interactive: true,
-    dataVar: 'json_Cabos_2',
-    layerName: 'layer_Cabos_2',
-    pane: 'pane_Cabos_2',
-    onEachFeature: pop_Cabos_2,
-    style: style_Cabos_2_0,
-});
-// coloca a camada de cabos no grupo dos itens do mapa 
-bounds_group.addLayer(layer_Cabos_2);
-// adiciona a camada de cabos ao mapa 
-map.addLayer(layer_Cabos_2);
-// Criado um painel para serem utilizados os postes 
-map.createPane('pane_Postes_3');
-// dá um style para o painel
-map.getPane('pane_Postes_3').style.zIndex = 403;
-map.getPane('pane_Postes_3').style['mix-blend-mode'] = 'normal';
-// cria uma camada com os cabos 
-var layer_Postes_3 = new L.geoJson(json_Postes_3, {
-    attribution: '',
-    interactive: false,
-    dataVar: 'json_Postes_3',
-    layerName: 'layer_Postes_3',
-    pane: 'pane_Postes_3',
-    onEachFeature: pop_Postes_3,
-    pointToLayer: function (feature, latlng) {
-        var context = {
-            feature: feature,
-            variables: {}
-        };
-        return L.circleMarker(latlng, style_Postes_3_0(feature));
-    },
-});
-// coloca a camada de postes no grupo dos itens do mapa 
-bounds_group.addLayer(layer_Postes_3);
-//Declara o geocoder 
-var osmGeocoder = new L.Control.Geocoder({
-    collapsed: false,
-    position: 'topright',
-    text: 'Procure',
-    title: 'Testing'
-}).addTo(map);
-//Pega a imagam da lupinha 
-document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
-.className += ' fa fa-search';
-//insere a informação que apararece no mouse ao colocar o mouse sobre 
-document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
-.title += 'Procure por um local';
-//Exibe o formulário com informações para contato
-function exibirFormulario() {
-    var formularioPopUp = document.getElementById('formularioPopUp');
-    var overlay = document.getElementById('overlay');
-    formularioPopUp.style.display = 'block';
-    overlay.style.display = 'block';
+
+// Função principal para inicializar o mapa e suas camadas
+function inicializarMapa() {
+    // Inicializa o mapa
+    map = L.map('map', {
+        zoomControl: true,
+        maxZoom: 28,
+        minZoom: 6
+    }).fitBounds([[-29.95, -56.00], [-25.55, -47.70]]);
+
+    map.attributionControl.setPrefix('Informações de atribuição...'); // Exemplo de atribuição
+
+    // Criação e adição das camadas base
+    baseMaps["Sat"] = criarLayerSatelite();
+    baseMaps["Osm"] = criarLayerOSM();
+    map.addLayer(baseMaps["Osm"]); // Adiciona inicialmente a camada OSM
+
+    // Criação e adição das camadas específicas
+    criarECarregarCamadasEspecificas();
+
+    // Configura eventos para checkboxes após a criação das camadas
+    configurarCheckboxEventos();
+
+    // Configurações adicionais como Geocoder, etc.
+    configurarGeocoder();
 }
-//Ação acionada oao clicar para enviar as informaçõer
-function enviarEmail() {
-    // Obtenha os dados do formulário
-    var nome = document.getElementById('nome').value;
-    var email = document.getElementById('email').value;
-    var telefone = document.getElementById('telefone').value;
-    // Obtenha os dados da tabela de destino
-    var tabelaDestino = document.getElementById('tabelaDestino');
-    var dadosTabela = tabelaDestino.innerHTML;
-    // Simule o envio do e-mail (substitua isso pelo código real no backend)
-    var corpoEmail = `Nome: ${nome}\nE-mail: ${email}\nTelefone: ${telefone}`;
-    alert('E-mail enviado com sucesso:\n\n' + corpoEmail);
-    // Feche o popup
-    fecharFormulario();
+
+function criarECarregarCamadasEspecificas() {
+    // Garante que 'map' e 'bounds_group' estejam disponíveis
+    if (!map || !bounds_group) {
+        console.error("Mapa ou Grupo de Limites não inicializado.");
+        return;
+    }
+
+    // // Criação e adição da camada dos cabos diretamente ao mapa
+    // layer_Cabos_2 = adicionarCamada('Cabos', 'pane_Cabos_2', 402, 'normal', json_Cabos_2, pop_Cabos_2, style_Cabos_2_0);
+    // map.addLayer(layer_Cabos_2);
+
+    // Para as camadas de Postes, vamos usar clustering
+    var camadaPostesCluster = L.markerClusterGroup(); // Cria um grupo de clustering
+    layer_Postes_3 = adicionarCamadaCluster('Postes', 'pane_Postes_3', 403, 'normal', json_Postes_3, pop_Postes_3, style_Postes_3_0, camadaPostesCluster, true);
+    
+    // A camada de Projetos para Compartilhar é criada, mas não é adicionada ao mapa inicialmente
+    // layer_ProjetosparaCompartilhar_1 = adicionarCamada('Projetos para Compartilhar', 'pane_ProjetosparaCompartilhar_1', 405, 'normal', json_ProjetosparaCompartilhar_1, pop_ProjetosparaCompartilhar_1, style_ProjetosparaCompartilhar_1_0);
 }
-//fecha o formulário com informações para contato
-function fecharFormulario() {
-    var formularioPopUp = document.getElementById('formularioPopUp');
-    var overlay = document.getElementById('overlay');
-    formularioPopUp.style.display = 'none';
-    overlay.style.display = 'none';
-    fecharcontatos();
+
+// Adiciona uma camada ao mapa e ao grupo de limites e retorna a camada criada
+function adicionarCamada(nome, paneNome, zIndex, mixBlendMode, dadosJson, popupFunc, estiloFunc, isCircleMarker = false) {
+    var layer = new L.geoJson(dadosJson, {
+        // Propriedades omitidas para brevidade...
+    });
+
+    bounds_group.addLayer(layer);
+    map.addLayer(layer);
+    return layer; // Retorna a camada criada
 }
-// Função que dá o contraste ao colocar o mouse sobre os itens
-function highlightFeature(e) {
-    highlightLayer = e.target;
-        highlightLayer.setStyle({
-            weight: 10,
-        });
+var zoomParaDetalhamento = 12;
+function adicionarCamadaCluster(nome, paneNome, zIndex, mixBlendMode, dadosJson, popupFunc, estiloFunc, clusterGroup, isCircleMarker = false) {
+    // Cria a camada individual
+    var layerIndividual = new L.geoJson(dadosJson, {
+        attribution: '',
+        interactive: true,
+        dataVar: dadosJson,
+        layerName: nome,
+        pane: criarPainel(paneNome, zIndex, mixBlendMode),
+        onEachFeature: popupFunc,
+        style: estiloFunc,
+        ...(isCircleMarker && { pointToLayer: function (feature, latlng) { return L.circleMarker(latlng, estiloFunc(feature)); } })
+    });
+
+    // Adiciona os marcadores individuais ao grupo de clustering
+    layerIndividual.eachLayer(function(layer) {
+        clusterGroup.addLayer(layer);
+    });
+
+    // Inicialmente decide qual camada adicionar baseado no zoom atual
+    verificarZoomEAtualizarCamada(map.getZoom(), clusterGroup, layerIndividual);
+
+    // Ouve eventos de zoom no mapa para alternar entre camadas
+    map.on('zoomend', function() {
+        verificarZoomEAtualizarCamada(map.getZoom(), clusterGroup, layerIndividual);
+    });
+
+    // Retorna o grupo de clustering para referência, mas não é estritamente necessário
+    return clusterGroup;
 }
-function deshighlightFeature(e) {
-    voltaraonormal = e.target;
-    voltaraonormal.setStyle({
-        weight: 4,
+
+// Função para verificar o nível de zoom e atualizar a camada visível
+function verificarZoomEAtualizarCamada(zoomAtual, clusterGroup, layerIndividual) {
+    if (zoomAtual >= zoomParaDetalhamento) {
+        if (map.hasLayer(clusterGroup)) {
+            map.removeLayer(clusterGroup);
+        }
+        if (!map.hasLayer(layerIndividual)) {
+            map.addLayer(layerIndividual);
+        }
+    } else {
+        if (map.hasLayer(layerIndividual)) {
+            map.removeLayer(layerIndividual);
+        }
+        if (!map.hasLayer(clusterGroup)) {
+            map.addLayer(clusterGroup);
+        }
+    }
+}
+
+// Função para criar e retornar a camada de satélite
+function criarLayerSatelite() {
+    return L.tileLayer('https://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+        pane: criarPainel('pane_GoogleSatellite_0', 400, 'normal'),
+        opacity: 1.0,
+        attribution: 'Satélite',
+        minZoom: 6, maxZoom: 28,
+        minNativeZoom: 0, maxNativeZoom: 18
     });
 }
-// Função que carrega os dados para o pop up do cabos
-var featureSelecionada;
+
+// Função para criar e retornar a camada OSM
+function criarLayerOSM() {
+    return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        pane: criarPainel('pane_OpenStreetMap_1', 401, 'normal'),
+        opacity: 1.0,
+        attribution: 'Mapa',
+        minZoom: 6, maxZoom: 28,
+        minNativeZoom: 0, maxNativeZoom: 19
+    });
+}
+
+// Função para configurar o Geocoder
+function configurarGeocoder() {
+    var osmGeocoder = new L.Control.Geocoder({
+        collapsed: false,
+        position: 'topright',
+        text: 'Procure',
+        title: 'Buscar localização'
+    }).addTo(map);
+
+    // Personalização adicional do ícone do geocoder, se necessário
+}
+
+// Função para criar painéis no mapa, usada para estilizar e organizar as camadas
+function criarPainel(nome, zIndex, mixBlendMode) {
+    var pane = map.createPane(nome);
+    pane.style.zIndex = zIndex;
+    pane.style['mix-blend-mode'] = mixBlendMode;
+    return nome; // Retorna o nome do painel para referência
+}
+
 function pop_Cabos_2(feature, layer) {
     layer.on({
         click: function(e) {
@@ -287,6 +245,105 @@ function style_Postes_3_0() {
         interactive: false,
     }
 }
+
+// Função para configurar eventos para checkboxes
+function configurarCheckboxEventos() {
+    var checkboxCabos = document.getElementById("caixaCabos");
+    checkboxCabos.addEventListener('change', function() {
+        if (this.checked) {
+            map.addLayer(camada);
+        } else {
+            map.removeLayer(camada);
+        }
+    });
+    var checkboxCabos = document.getElementById("caixaPostes");
+    checkboxCabos.addEventListener('change', function() {
+        if (this.checked) {
+            map.addLayer(camada);
+        } else {
+            map.removeLayer(camada);
+        }
+    });
+    var checkboxCabos = document.getElementById("caixaCabosCompart");
+    checkboxCabos.addEventListener('change', function() {
+        if (this.checked) {
+            map.addLayer(camada);
+        } else {
+            map.removeLayer(camada);
+        }
+    });
+
+}
+
+
+// Assegura que o mapa e as camadas são inicializados depois que o DOM estiver completamente carregado
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarMapa();
+});
+
+// Função para mudar o mapa com base no tipo selecionado
+function mudarMapa(selectedLayer) {
+    // Atualiza o valor selecionado em todos os elementos select
+    var selectElements = document.querySelectorAll('select[name="SelecaoMapa"]');
+    for (var i = 0; i < selectElements.length; i++) {
+        selectElements[i].value = selectedLayer;
+    }
+
+    // Aplica a mudança de mapa conforme selecionado
+    if (selectedLayer === 'layer_GoogleSatellite_0') {
+        layer_GoogleSatellite_0.addTo(map);
+        map.removeLayer(layer_OpenStreetMap_1);
+    } else if (selectedLayer === 'layer_OpenStreetMap_1') {
+        layer_OpenStreetMap_1.addTo(map);
+        map.removeLayer(layer_GoogleSatellite_0);
+    }
+}
+
+
+//Exibe o formulário com informações para contato
+function exibirFormulario() {
+    var formularioPopUp = document.getElementById('formularioPopUp');
+    var overlay = document.getElementById('overlay');
+    formularioPopUp.style.display = 'block';
+    overlay.style.display = 'block';
+}
+//Ação acionada oao clicar para enviar as informaçõer
+function enviarEmail() {
+    // Obtenha os dados do formulário
+    var nome = document.getElementById('nome').value;
+    var email = document.getElementById('email').value;
+    var telefone = document.getElementById('telefone').value;
+    // Obtenha os dados da tabela de destino
+    var tabelaDestino = document.getElementById('tabelaDestino');
+    var dadosTabela = tabelaDestino.innerHTML;
+    // Simule o envio do e-mail (substitua isso pelo código real no backend)
+    var corpoEmail = `Nome: ${nome}\nE-mail: ${email}\nTelefone: ${telefone}`;
+    alert('E-mail enviado com sucesso:\n\n' + corpoEmail);
+    // Feche o popup
+    fecharFormulario();
+}
+//fecha o formulário com informações para contato
+function fecharFormulario() {
+    var formularioPopUp = document.getElementById('formularioPopUp');
+    var overlay = document.getElementById('overlay');
+    formularioPopUp.style.display = 'none';
+    overlay.style.display = 'none';
+    fecharcontatos();
+}
+// Função que dá o contraste ao colocar o mouse sobre os itens
+function highlightFeature(e) {
+    highlightLayer = e.target;
+        highlightLayer.setStyle({
+            weight: 10,
+        });
+}
+function deshighlightFeature(e) {
+    voltaraonormal = e.target;
+    voltaraonormal.setStyle({
+        weight: 4,
+    });
+}
+
 //realiza a busca
 function RealizarBusca() {
     // Obtém os elementos de seleção
@@ -324,6 +381,7 @@ function RemoverLinhaETotais(linha, comprimento, postes) {
 }
 //Adiciona os itens ao carrinho
 function AdicionarAoCarrinho(idCabo, comprimento, postes) {
+    debugger
     // Verificar se o ID já foi selecionado
     if (idsSelecionados[idCabo]) {
         alert("Este objeto já foi selecionado!");
@@ -538,18 +596,3 @@ function style_ProjetosparaCompartilhar_1_0() {
         interactive: true,
     }
 }
-map.createPane('pane_ProjetosparaCompartilhar_1');
-map.getPane('pane_ProjetosparaCompartilhar_1').style.zIndex = 405;
-map.getPane('pane_ProjetosparaCompartilhar_1').style['mix-blend-mode'] = 'normal';
-var layer_ProjetosparaCompartilhar_1 = new L.geoJson(json_ProjetosparaCompartilhar_1, {
-    attribution: '',
-    interactive: true,
-    dataVar: 'json_ProjetosparaCompartilhar_1',
-    layerName: 'layer_ProjetosparaCompartilhar_1',
-    pane: 'pane_ProjetosparaCompartilhar_1',
-    onEachFeature: pop_ProjetosparaCompartilhar_1,
-    style: style_ProjetosparaCompartilhar_1_0,
-});
-bounds_group.addLayer(layer_ProjetosparaCompartilhar_1);
-map.addLayer(layer_ProjetosparaCompartilhar_1);
-var baseMaps = {};
